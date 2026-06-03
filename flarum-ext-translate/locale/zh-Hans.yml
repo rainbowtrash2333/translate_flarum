@@ -1,0 +1,7 @@
+twikura-translate:
+  admin:
+    settings:
+      api_base_url: FastAPI 服务地址
+      allow_guests: 允许游客翻译
+      max_text_length: 最大文本长度
+      max_batch_size: 最大批量数量

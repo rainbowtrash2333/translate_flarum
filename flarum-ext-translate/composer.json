@@ -1,0 +1,27 @@
+{
+    "name": "twikura/flarum-ext-translate",
+    "description": "Local translation proxy and forum UI for Flarum.",
+    "type": "flarum-extension",
+    "license": "MIT",
+    "require": {
+        "flarum/core": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Twikura\\Translate\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Translate",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-language",
+                "backgroundColor": "#2563eb",
+                "color": "#fff"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
