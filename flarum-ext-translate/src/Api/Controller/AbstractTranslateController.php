@@ -94,7 +94,7 @@ abstract class AbstractTranslateController
             CURLOPT_POSTFIELDS => $json,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_TIMEOUT => 15,
+            CURLOPT_TIMEOUT => 180,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',

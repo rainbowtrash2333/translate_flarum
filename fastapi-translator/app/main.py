@@ -1,74 +1,43 @@
 from __future__ import annotations
 
-import hashlib
-import sqlite3
+import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from html import escape
-from pathlib import Path
 from threading import Lock
-from typing import Iterable
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
+from app.config import load_config, AppConfig
+from app.database import init_db, close_db
+from app.translator import translate_one, translate_many
+from app.batch_queue import init_queue, shutdown_queue
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
-DB_PATH = DATA_DIR / "translations.sqlite3"
-TRANSLATION_CACHE_VERSION = "test-format-v2"
+
 MAX_LOGS = 200
 TRANSLATION_LOGS: list[dict[str, str]] = []
 TRANSLATION_LOGS_LOCK = Lock()
+
+config: AppConfig = None
 
 
 class TranslateRequest(BaseModel):
     lang: str = Field(..., min_length=1, max_length=32)
     text: str
+    format: str = "auto"
 
 
 class BatchTranslateItem(BaseModel):
     id: str = Field(..., min_length=1, max_length=128)
     text: str
+    format: str = "auto"
 
 
 class BatchTranslateRequest(BaseModel):
     lang: str = Field(..., min_length=1, max_length=32)
     items: list[BatchTranslateItem] = Field(default_factory=list)
-
-
-app = FastAPI(title="Flarum Test Translator", version="0.1.0")
-
-
-def init_db() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as connection:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS translations (
-                cache_key TEXT PRIMARY KEY,
-                lang TEXT NOT NULL,
-                source TEXT NOT NULL,
-                translated TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-
-@app.on_event("startup")
-def startup() -> None:
-    init_db()
-
-
-def cache_key(lang: str, text: str) -> str:
-    digest = hashlib.sha256(f"{TRANSLATION_CACHE_VERSION}\0{lang}\0{text}".encode("utf-8")).hexdigest()
-
-    return digest
-
-
-def fake_translate(lang: str, text: str) -> str:
-    return f"tran_{lang}_ {text}"
 
 
 def log_translation(kind: str, lang: str, source: str, translated: str, item_id: str = "") -> None:
@@ -86,45 +55,30 @@ def log_translation(kind: str, lang: str, source: str, translated: str, item_id:
         del TRANSLATION_LOGS[MAX_LOGS:]
 
 
-def translate_one(lang: str, text: str, kind: str = "single", item_id: str = "") -> dict[str, str]:
-    key = cache_key(lang, text)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global config
+    # Load config
+    config = load_config()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logger = logging.getLogger("translate")
+    logger.info("Starting Flarum Translate backend...")
 
-    with sqlite3.connect(DB_PATH) as connection:
-        row = connection.execute(
-            "SELECT translated FROM translations WHERE cache_key = ?",
-            (key,),
-        ).fetchone()
+    # Init database (may log warning if MariaDB unavailable)
+    await init_db(config.database)
 
-        if row:
-            translated = row[0]
-        else:
-            translated = fake_translate(lang, text)
-            connection.execute(
-                """
-                INSERT INTO translations (cache_key, lang, source, translated)
-                VALUES (?, ?, ?, ?)
-                """,
-                (key, lang, text, translated),
-            )
+    # Init batch queue
+    await init_queue(config)
 
-    log_translation(kind, lang, text, translated, item_id)
-
-    return {
-        "lang": lang,
-        "source": text,
-        "translated": translated,
-    }
+    logger.info(f"Server ready on {config.server.host}:{config.server.port}")
+    yield
+    # Shutdown
+    logger.info("Shutting down...")
+    await shutdown_queue()
+    await close_db()
 
 
-def translate_many(lang: str, items: Iterable[BatchTranslateItem]) -> list[dict[str, str]]:
-    translated_items = []
-
-    for item in items:
-        result = translate_one(lang, item.text, "batch", item.id)
-        result["id"] = item.id
-        translated_items.append(result)
-
-    return translated_items
+app = FastAPI(title="Flarum Translate", version="0.2.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -133,16 +87,19 @@ def health() -> dict[str, str]:
 
 
 @app.post("/translate")
-def translate(request: TranslateRequest) -> dict[str, str]:
-    return translate_one(request.lang, request.text)
+async def translate(request: TranslateRequest) -> dict[str, str]:
+    result = await translate_one(request.text, request.lang)
+    log_translation("single", request.lang, request.text, result.get("translated", ""))
+    return result
 
 
 @app.post("/translate/batch")
-def translate_batch(request: BatchTranslateRequest) -> dict[str, object]:
-    return {
-        "lang": request.lang,
-        "items": translate_many(request.lang, request.items),
-    }
+async def translate_batch(request: BatchTranslateRequest) -> dict[str, object]:
+    items = [{"id": item.id, "text": item.text, "format": item.format} for item in request.items]
+    results = await translate_many(items, request.lang)
+    for item, result in zip(request.items, results):
+        log_translation("batch", request.lang, item.text, result.get("translated", ""), item.id)
+    return {"lang": request.lang, "items": results}
 
 
 @app.get("/logs", response_class=HTMLResponse)
@@ -273,3 +230,9 @@ def clear_logs() -> dict[str, str]:
         TRANSLATION_LOGS.clear()
 
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    cfg = load_config()
+    uvicorn.run("app.main:app", host=cfg.server.host, port=cfg.server.port, reload=False)

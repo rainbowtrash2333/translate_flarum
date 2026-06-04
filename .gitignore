@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# FastAPI translator
+fastapi-translator/config.yaml
+fastapi-translator/data/
+
+# PHP / Flarum
+flarum-ext-translate/vendor/
+flarum-ext-translate/node_modules/
+flarum-ext-translate/composer.lock
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
