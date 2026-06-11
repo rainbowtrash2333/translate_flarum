@@ -1,7 +1,18 @@
 twikura-translate:
+  forum:
+    auto_translate: "Auto Translate"
+    disable_translate: "Disable Translation"
+    translate: "Translate"
+    original: "Original"
+    translation_failed: "Translation failed."
   admin:
     settings:
       api_base_url: FastAPI Base URL
       allow_guests: Allow guest translation
       max_text_length: Maximum text length
       max_batch_size: Maximum batch size
+    test:
+      title: "Translation test"
+      description: "Send test text through the Flarum proxy and show the translator response. Current target language: {lang}"
+      button: "Test Translation"
+      failed: "Translation test failed."

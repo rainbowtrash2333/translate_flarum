@@ -1,7 +1,18 @@
 twikura-translate:
+  forum:
+    auto_translate: "自动翻译"
+    disable_translate: "关闭翻译"
+    translate: "翻译"
+    original: "原文"
+    translation_failed: "翻译失败。"
   admin:
     settings:
       api_base_url: FastAPI 服务地址
       allow_guests: 允许游客翻译
       max_text_length: 最大文本长度
       max_batch_size: 最大批量数量
+    test:
+      title: "翻译测试"
+      description: "通过Flarum代理发送测试文本并显示翻译器响应。当前目标语言：{lang}"
+      button: "测试翻译"
+      failed: "翻译测试失败。"
