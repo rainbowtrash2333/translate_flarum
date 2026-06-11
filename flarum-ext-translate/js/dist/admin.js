@@ -41,9 +41,9 @@
       testResult = response && response.translated ? response.translated : JSON.stringify(response);
     }).catch(function (error) {
       if (error && error.response && error.response.errors && error.response.errors[0]) {
-        testError = error.response.errors[0].detail || 'Translation test failed.';
+        testError = error.response.errors[0].detail || app.translator.trans('twikura-translate.admin.test.failed');
       } else {
-        testError = error && error.message ? error.message : 'Translation test failed.';
+        testError = error && error.message ? error.message : app.translator.trans('twikura-translate.admin.test.failed');
       }
     }).then(function () {
       testing = false;
@@ -53,8 +53,8 @@
 
   function testPanel() {
     return m('div', { className: 'Form-group TwikuraTranslateTestPanel' }, [
-      m('label', 'Translation test'),
-      m('div', { className: 'helpText' }, 'Send test text through the Flarum proxy and show the translator response. Current target language: ' + currentLang()),
+      m('label', app.translator.trans('twikura-translate.admin.test.title')),
+      m('div', { className: 'helpText' }, app.translator.trans('twikura-translate.admin.test.description', {lang: currentLang()})),
       m('input', {
         className: 'FormControl',
         type: 'text',
@@ -71,7 +71,7 @@
           disabled: testing,
           onclick: runTranslationTest
         },
-        'Test Translation'
+        app.translator.trans('twikura-translate.admin.test.button')
       ),
       testResult && m('pre', { className: 'TwikuraTranslateTestResult' }, testResult),
       testError && m('div', { className: 'Alert Alert--error TwikuraTranslateTestError' }, testError)
@@ -83,23 +83,23 @@
       .for('twikura-translate')
       .registerSetting({
         setting: 'twikura-translate.api_base_url',
-        label: 'FastAPI Base URL',
+        label: app.translator.trans('twikura-translate.admin.settings.api_base_url'),
         help: 'Use a local-only URL such as http://127.0.0.1:8000 or a Docker network URL.',
         type: 'text'
       })
       .registerSetting({
         setting: 'twikura-translate.allow_guests',
-        label: 'Allow guest translation',
+        label: app.translator.trans('twikura-translate.admin.settings.allow_guests'),
         type: 'boolean'
       })
       .registerSetting({
         setting: 'twikura-translate.max_text_length',
-        label: 'Maximum text length',
+        label: app.translator.trans('twikura-translate.admin.settings.max_text_length'),
         type: 'number'
       })
       .registerSetting({
         setting: 'twikura-translate.max_batch_size',
-        label: 'Maximum batch size',
+        label: app.translator.trans('twikura-translate.admin.settings.max_batch_size'),
         type: 'number'
       })
       .registerSetting(testPanel);

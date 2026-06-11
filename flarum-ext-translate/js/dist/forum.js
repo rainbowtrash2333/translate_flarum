@@ -169,7 +169,7 @@
     return request.then(function (translated) {
       setTranslated(state, lang, translated);
     }).catch(function (error) {
-      state.error = error && error.message ? error.message : 'Translation failed.';
+      state.error = error && error.message ? error.message : app.translator.trans('twikura-translate.forum.translation_failed');
       restoreOriginal(state);
     }).then(function () {
       state.loading = false;
@@ -236,7 +236,7 @@
             },
             'aria-pressed': autoEnabled() ? 'true' : 'false'
           },
-          autoEnabled() ? '关闭翻译' : '自动翻译'
+          autoEnabled() ? app.translator.trans('twikura-translate.forum.disable_translate') : app.translator.trans('twikura-translate.forum.auto_translate')
         ),
         25
       );
@@ -270,7 +270,7 @@
               }
             }
           },
-          state.mode === 'translated' && state.lang === currentLang() ? '原文' : '翻译'
+          state.mode === 'translated' && state.lang === currentLang() ? app.translator.trans('twikura-translate.forum.original') : app.translator.trans('twikura-translate.forum.translate')
         ),
         -10
       );
