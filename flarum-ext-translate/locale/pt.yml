@@ -1,0 +1,18 @@
+twikura-translate:
+  forum:
+    auto_translate: "Tradução automática"
+    disable_translate: "Desativar tradução"
+    translate: "Traduzir"
+    original: "Original"
+    translation_failed: "Tradução falhou."
+  admin:
+    settings:
+      api_base_url: URL base do FastAPI
+      allow_guests: Permitir tradução de convidados
+      max_text_length: Comprimento máximo do texto
+      max_batch_size: Tamanho máximo do lote
+    test:
+      title: "Teste de tradução"
+      description: "Enviar texto de teste através do proxy Flarum e mostrar a resposta do tradutor. Idioma de destino atual: {lang}"
+      button: "Testar tradução"
+      failed: "Teste de tradução falhou."

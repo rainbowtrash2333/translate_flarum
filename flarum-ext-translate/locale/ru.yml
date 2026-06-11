@@ -1,0 +1,18 @@
+twikura-translate:
+  forum:
+    auto_translate: "Автоперевод"
+    disable_translate: "Отключить перевод"
+    translate: "Перевести"
+    original: "Оригинал"
+    translation_failed: "Перевод не удался."
+  admin:
+    settings:
+      api_base_url: Базовый URL FastAPI
+      allow_guests: Разрешить перевод гостям
+      max_text_length: Максимальная длина текста
+      max_batch_size: Максимальный размер пакета
+    test:
+      title: "Тест перевода"
+      description: "Отправить тестовый текст через прокси Flarum и показать ответ переводчика. Текущий целевой язык: {lang}"
+      button: "Тестировать перевод"
+      failed: "Тест перевода не удался."
