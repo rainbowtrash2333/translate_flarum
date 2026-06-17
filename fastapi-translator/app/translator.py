@@ -47,3 +47,70 @@ async def translate_many(items: list[dict], lang: str) -> list[dict[str, str]]:
 
     results = await asyncio.gather(*[_translate_item(item) for item in items])
     return list(results)
+
+
+async def translate_one_stream(text: str, lang: str):
+    """Async generator that yields SSE event dicts for single translation.
+
+    Yields dicts with keys: {"event": str, "data": dict}
+
+    Event sequence:
+    - {"event": "start", "data": {"lang": lang, "source": text}}
+    - Zero or more {"event": "token", "data": {"text": char, "index": n}}
+    - On error: {"event": "error", "data": {"error": error_message}} (then stops)
+    - On success: {"event": "done", "data": {"lang": lang, "source": text, "translated": translated_text}}
+    """
+    try:
+        result = await translate_one(text, lang)
+
+        if "error" in result:
+            yield {"event": "error", "data": {"error": result["error"]}}
+            return
+
+        yield {"event": "start", "data": {"lang": lang, "source": text}}
+
+        translated = result["translated"]
+        for i, char in enumerate(translated):
+            yield {"event": "token", "data": {"text": char, "index": i}}
+            await asyncio.sleep(0.015)
+
+        yield {"event": "done", "data": {"lang": lang, "source": text, "translated": translated}}
+    except Exception as exc:
+        yield {"event": "error", "data": {"error": str(exc)}}
+
+
+async def translate_many_stream(items: list[dict], lang: str):
+    """Async generator that yields SSE event dicts for batch translation.
+
+    Yields dicts with keys: {"event": str, "data": dict}
+
+    Event sequence:
+    - {"event": "start", "data": {"lang": lang, "count": len(items)}}
+    - For each item: {"event": "item_done", "data": {"id": item["id"], "lang": lang, "source": item["text"], "translated": result_str}}
+    - On fatal error: {"event": "error", "data": {"error": error_message}} (then stops)
+    - {"event": "complete", "data": {"lang": lang, "count": len(items)}}
+    """
+    try:
+        yield {"event": "start", "data": {"lang": lang, "count": len(items)}}
+
+        tasks = [asyncio.ensure_future(translate_one(item["text"], lang)) for item in items]
+        task_map = {id(t): item for t, item in zip(tasks, items)}
+
+        for done in asyncio.as_completed(tasks):
+            result = await done
+            item_data = task_map[id(done)]
+
+            data = {
+                "id": item_data["id"],
+                "lang": lang,
+                "source": item_data["text"],
+                "translated": result.get("translated", ""),
+            }
+            if "error" in result:
+                data["error"] = result["error"]
+
+            yield {"event": "item_done", "data": data}
+
+        yield {"event": "complete", "data": {"lang": lang, "count": len(items)}}
+    except Exception as exc:
+        yield {"event": "error", "data": {"error": str(exc)}}
