@@ -8,6 +8,11 @@ from typing import Optional
 
 
 @dataclass
+class AuthConfig:
+    password: str = ""
+
+
+@dataclass
 class ProviderConfig:
     name: str
     base_url: str
@@ -50,6 +55,7 @@ class ProvidersConfig:
 
 @dataclass
 class AppConfig:
+    auth: AuthConfig
     server: ServerConfig
     database: DatabaseConfig
     providers: ProvidersConfig
@@ -96,7 +102,7 @@ def load_config(path: str = "config.yaml") -> AppConfig:
 
     cfg = _substitute_env_in_dict(raw)
 
-    for key in ("server", "database", "providers", "translation"):
+    for key in ("auth", "server", "database", "providers", "translation"):
         if key not in cfg:
             print(f"Error: Missing required config key: {key}", file=sys.stderr)
             sys.exit(1)
@@ -119,6 +125,11 @@ def load_config(path: str = "config.yaml") -> AppConfig:
     server_config = ServerConfig(
         host=server.get("host", "127.0.0.1"),
         port=server.get("port", 8000),
+    )
+
+    auth_raw = cfg.get("auth", {})
+    auth_config = AuthConfig(
+        password=auth_raw.get("password", ""),
     )
 
     db = cfg["database"]
@@ -162,6 +173,7 @@ def load_config(path: str = "config.yaml") -> AppConfig:
     )
 
     return AppConfig(
+        auth=auth_config,
         server=server_config,
         database=database_config,
         providers=providers_config,

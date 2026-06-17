@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import select
+from sqlalchemy import select, func, desc
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 from app.config import DatabaseConfig
@@ -107,3 +107,70 @@ async def set_cache(
             await session.commit()
     except Exception as error:
         logger.warning("Cache write failed: %s", error)
+
+
+async def get_cache_count() -> int:
+    """Get total number of cached translations.
+
+    Returns:
+        Total count, or 0 if cache is unavailable.
+    """
+    if _async_session_factory is None:
+        return 0
+
+    try:
+        async with _async_session_factory() as session:
+            result = await session.execute(
+                select(func.count()).select_from(TranslationCache)
+            )
+            return result.scalar() or 0
+    except Exception as error:
+        logger.warning("Cache count failed: %s", error)
+        return 0
+
+
+async def get_all_cache(
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict]:
+    """Fetch translation cache entries with pagination, newest first.
+
+    Args:
+        limit: Maximum number of rows to return.
+        offset: Number of rows to skip.
+
+    Returns:
+        List of dicts with keys: text_hash, target_lang, original_text,
+        translated_text, source_lang, created_at, updated_at.
+        Timestamps are returned as ISO-format strings.
+        Returns empty list if cache is unavailable or error occurs.
+    """
+    if _async_session_factory is None:
+        return []
+
+    try:
+        async with _async_session_factory() as session:
+            stmt = (
+                select(TranslationCache)
+                .order_by(desc(TranslationCache.updated_at))
+                .offset(offset)
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+
+            return [
+                {
+                    "text_hash": row.text_hash,
+                    "target_lang": row.target_lang,
+                    "original_text": row.original_text,
+                    "translated_text": row.translated_text,
+                    "source_lang": row.source_lang,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                }
+                for row in rows
+            ]
+    except Exception as error:
+        logger.warning("Cache listing failed: %s", error)
+        return []
