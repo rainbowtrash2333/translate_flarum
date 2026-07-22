@@ -5,14 +5,59 @@ twikura-translate:
     translate: "Translate"
     original: "Original"
     translation_failed: "Translation failed."
+    translating: "Translating..."
+    retry: "Retry"
   admin:
     settings:
-      api_base_url: FastAPI Base URL
+      auto_translate: Automatically translate new posts
+      llm_base_url: LLM Base URL
+      llm_api_key: LLM API Key
+      llm_model: LLM Model
+      llm_timeout: LLM Timeout (seconds)
+      llm_max_retries: LLM Max Retries
+      lang_map: Language Map
+      system_prompt: System Prompt
       allow_guests: Allow guest translation
-      max_text_length: Maximum text length
-      max_batch_size: Maximum batch size
     test:
       title: "Translation test"
-      description: "Send test text through the Flarum proxy and show the translator response. Current target language: {lang}"
+      description: "Send test text through the translator service and show the response. Current target language: {lang}"
       button: "Test Translation"
       failed: "Translation test failed."
+    nav:
+      translate: "Translate"
+    page:
+      title: "Translate Management"
+      description: "Monitor translation logs, review the prompt, and run bulk backfill."
+    tabs:
+      logs: "Logs"
+      prompt: "Prompt"
+      backfill: "Backfill"
+    loading: "Loading..."
+    logs:
+      title: "Translation Logs"
+      filter_lang: "Language"
+      filter_status: "Status"
+      all_lang: "All languages"
+      all_status: "All statuses"
+      created_at: "Created"
+      post: "Post"
+      lang: "Lang"
+      status: "Status"
+      tokens: "Tokens (in/out)"
+      latency: "Latency"
+      prompt_full: "Prompt"
+      response_final: "Response"
+      source_content: "Source"
+      translated_content: "Translated"
+      empty: "No logs found."
+      prev: "Previous"
+      next: "Next"
+    prompt:
+      title: "System Prompt"
+      description: "The current system prompt template. To edit it, go to Extensions → Translate → Settings."
+      lang_map: "Configured Languages"
+    backfill:
+      title: "Bulk Backfill"
+      lang: "Target Language"
+      scan: "Scan & Backfill"
+      result: "Scanned {scanned} posts, inserted {inserted} pending translations."

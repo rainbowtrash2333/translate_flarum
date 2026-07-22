@@ -9,29 +9,32 @@ twikura-translate:
     retry: "重试"
   admin:
     settings:
-      auto_translate: 自动翻译新帖
-      llm_base_url: LLM 服务地址
-      llm_api_key: LLM API Key
-      llm_model: LLM 模型
-      llm_timeout: LLM 超时（秒）
-      llm_max_retries: LLM 最大重试次数
-      lang_map: 目标语言映射
-      system_prompt: 系统提示词
-      allow_guests: 允许游客翻译
+      api_base_url: FastAPI 基础 URL
+      auto_translate: "自动翻译新帖子"
+      llm_base_url: "LLM 基础 URL"
+      llm_api_key: "LLM API 密钥"
+      llm_model: "LLM 模型"
+      llm_timeout: "LLM 超时（秒）"
+      llm_max_retries: "LLM 最大重试次数"
+      lang_map: "语言映射"
+      system_prompt: "系统提示词"
+      allow_guests: "允许游客翻译"
+      max_text_length: "最大文本长度"
+      max_batch_size: "最大批量大小"
     test:
       title: "翻译测试"
-      description: "通过翻译服务发送测试文本并显示响应。当前目标语言：{lang}"
+      description: "发送测试文本到翻译服务并显示结果。当前目标语言：{lang}"
       button: "测试翻译"
       failed: "翻译测试失败。"
     nav:
       translate: "翻译"
     page:
       title: "翻译管理"
-      description: "查看翻译日志、检查提示词、执行批量补译。"
+      description: "查看翻译日志、查看提示词并执行批量补译。"
     tabs:
       logs: "日志"
       prompt: "提示词"
-      backfill: "批量补译"
+      backfill: "补译"
     loading: "加载中..."
     logs:
       title: "翻译日志"
@@ -39,11 +42,11 @@ twikura-translate:
       filter_status: "状态"
       all_lang: "全部语言"
       all_status: "全部状态"
-      created_at: "时间"
+      created_at: "创建时间"
       post: "帖子"
       lang: "语言"
       status: "状态"
-      tokens: "Token (输入/输出)"
+      tokens: "Token（入/出）"
       latency: "耗时"
       prompt_full: "提示词"
       response_final: "响应"
@@ -54,10 +57,10 @@ twikura-translate:
       next: "下一页"
     prompt:
       title: "系统提示词"
-      description: "当前系统提示词模板。如需修改，请前往 扩展 → 翻译 → 设置。"
+      description: "当前系统提示词模板。如需修改，请前往 扩展 → Translate → 设置。"
       lang_map: "已配置语言"
     backfill:
       title: "批量补译"
       lang: "目标语言"
       scan: "扫描并补译"
-      result: "扫描到 {scanned} 个帖子，插入 {inserted} 条待翻译记录。"
+      result: "扫描了 {scanned} 条帖子，插入了 {inserted} 条待译记录。"

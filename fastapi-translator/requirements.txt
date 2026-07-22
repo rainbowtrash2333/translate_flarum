@@ -1,7 +1,0 @@
-fastapi>=0.111,<1
-uvicorn[standard]>=0.30,<1
-pydantic>=2,<3
-pyyaml>=6,<7
-httpx>=0.27,<1
-sqlalchemy[asyncio]>=2,<3
-aiomysql>=0.2,<1
