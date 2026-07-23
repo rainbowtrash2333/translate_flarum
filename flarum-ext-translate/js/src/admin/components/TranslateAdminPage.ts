@@ -259,65 +259,69 @@ export default class TranslateAdminPage extends AdminPage {
 	renderLogRow(log: LogEntry) {
 		const isExpanded = this.expandedLog === log.id;
 
+		const row = m(
+			"tr",
+			{
+				key: log.id,
+				onclick: () => {
+					this.expandedLog = isExpanded ? null : log.id;
+					m.redraw();
+				},
+			},
+			[
+				m("td", log.created_at),
+				m(
+					"td",
+					m("a", { href: postUrl(log), target: "_blank" }, `#${log.post_id}`),
+				),
+				m("td", log.target_lang),
+				m("td", log.status),
+				m("td", `${log.tokens_in ?? "-"}/${log.tokens_out ?? "-"}`),
+				m("td", `${log.latency_ms ?? "-"}ms`),
+			],
+		);
+
+		if (!isExpanded) {
+			return row;
+		}
+
 		return [
+			row,
 			m(
 				"tr",
-				{
-					key: log.id,
-					onclick: () => {
-						this.expandedLog = isExpanded ? null : log.id;
-						m.redraw();
-					},
-				},
-				[
-					m("td", log.created_at),
+				{ key: `expanded-${log.id}` },
+				m("td", { colspan: 6 }, [
 					m(
-						"td",
-						m("a", { href: postUrl(log), target: "_blank" }, `#${log.post_id}`),
+						"h4",
+						app.translator.trans(
+							"twikura-translate.admin.logs.prompt_full",
+						),
 					),
-					m("td", log.target_lang),
-					m("td", log.status),
-					m("td", `${log.tokens_in ?? "-"}/${log.tokens_out ?? "-"}`),
-					m("td", `${log.latency_ms ?? "-"}ms`),
-				],
+					m("pre", log.prompt_full),
+					m(
+						"h4",
+						app.translator.trans(
+							"twikura-translate.admin.logs.response_final",
+						),
+					),
+					m("pre", log.response_final),
+					m(
+						"h4",
+						app.translator.trans(
+							"twikura-translate.admin.logs.source_content",
+						),
+					),
+					m("pre", log.source_content),
+					m(
+						"h4",
+						app.translator.trans(
+							"twikura-translate.admin.logs.translated_content",
+						),
+					),
+					m("pre", log.translated_content),
+					log.error ? m(".Alert.Alert--error", log.error) : null,
+				]),
 			),
-			isExpanded
-				? m(
-						"tr",
-						{ key: `expanded-${log.id}` },
-						m("td", { colspan: 6 }, [
-							m(
-								"h4",
-								app.translator.trans(
-									"twikura-translate.admin.logs.prompt_full",
-								),
-							),
-							m("pre", log.prompt_full),
-							m(
-								"h4",
-								app.translator.trans(
-									"twikura-translate.admin.logs.response_final",
-								),
-							),
-							m("pre", log.response_final),
-							m(
-								"h4",
-								app.translator.trans(
-									"twikura-translate.admin.logs.source_content",
-								),
-							),
-							m("pre", log.source_content),
-							m(
-								"h4",
-								app.translator.trans(
-									"twikura-translate.admin.logs.translated_content",
-								),
-							),
-							m("pre", log.translated_content),
-							log.error ? m(".Alert.Alert--error", log.error) : null,
-						]),
-					)
-				: null,
 		];
 	}
 
