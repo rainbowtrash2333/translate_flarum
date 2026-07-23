@@ -7,8 +7,6 @@ namespace Twikura\Translate\Command;
 use Flarum\Console\AbstractCommand;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Twikura\Translate\Job\Worker;
 use Twikura\Translate\Llm\OpenAiSseClient;
 use Twikura\Translate\Llm\PromptBuilder;
@@ -29,7 +27,7 @@ final class TranslateRunCommand extends AbstractCommand
             ->setDescription('Start the translation worker loop (poll pending rows from post_translations).');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function fire()
     {
         // --- Bootstrap ---------------------------------------------------------
 

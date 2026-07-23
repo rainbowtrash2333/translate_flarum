@@ -29,7 +29,7 @@ return [
     // Console command (long-running worker)
     // ------------------------------------------------------------------
     (new Extend\Console())
-        ->command('translate:run', TranslateRunCommand::class),
+        ->command(TranslateRunCommand::class),
 
     // ------------------------------------------------------------------
     // API routes
