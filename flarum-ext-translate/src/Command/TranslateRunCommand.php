@@ -99,7 +99,7 @@ final class TranslateRunCommand extends AbstractCommand
             $db->table('post_translations')
                 ->where('post_id', (int) $row->post_id)
                 ->where('target_lang', $row->target_lang)
-                ->update(['status' => 'running', 'updated_at' => now()]);
+                ->update(['status' => 'running', 'updated_at' => new \DateTimeImmutable()]);
 
             $db->commit();
 

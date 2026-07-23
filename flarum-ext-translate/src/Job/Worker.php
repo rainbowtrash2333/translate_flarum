@@ -92,22 +92,22 @@ final class Worker
                     ->update([
                         'status' => 'error',
                         'error' => mb_strcut($errorMessage, 0, 65535),
-                        'updated_at' => now(),
+                        'updated_at' => new \DateTimeImmutable(),
                     ]);
 
                 $this->db->table('translation_logs')->insert([
-                    'post_id' => $postId,
-                    'target_lang' => $targetLang,
-                    'prompt_full' => $promptFullJson,
-                    'response_final' => $errorMessage,
-                    'source_content' => $sourceContent,
-                    'translated_content' => '',
-                    'tokens_in' => null,
-                    'tokens_out' => null,
-                    'latency_ms' => $elapsed,
-                    'status' => 'error',
-                    'error' => mb_strcut($errorMessage, 0, 65535),
-                    'created_at' => now(),
+                        'post_id' => $postId,
+                        'target_lang' => $targetLang,
+                        'prompt_full' => $promptFullJson,
+                        'response_final' => $errorMessage,
+                        'source_content' => $sourceContent,
+                        'translated_content' => '',
+                        'tokens_in' => null,
+                        'tokens_out' => null,
+                        'latency_ms' => $elapsed,
+                        'status' => 'error',
+                        'error' => mb_strcut($errorMessage, 0, 65535),
+                        'created_at' => new \DateTimeImmutable(),
                 ]);
 
                 $this->db->commit();
@@ -141,7 +141,7 @@ final class Worker
                     'status' => 'done',
                     'translated_content' => $translatedContent,
                     'error' => null,
-                    'updated_at' => now(),
+                    'updated_at' => new \DateTimeImmutable(),
                 ]);
 
             $this->db->table('translation_logs')->insert([
@@ -156,7 +156,7 @@ final class Worker
                 'latency_ms' => $elapsed,
                 'status' => 'done',
                 'error' => null,
-                'created_at' => now(),
+                'created_at' => new \DateTimeImmutable(),
             ]);
 
             $this->db->commit();
