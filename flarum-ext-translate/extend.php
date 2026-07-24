@@ -118,9 +118,22 @@ return [
                 $attributes['translation_target_lang'] = null;
             } else {
                 $attributes['translation_status']      = $row['status'];
-                $attributes['translated_content']      = $row['translated_content'] ?? null;
                 $attributes['translation_error']       = $row['error'] ?? null;
                 $attributes['translation_target_lang'] = $row['target_lang'];
+
+                // Format raw Markdown/BBCode to HTML via Flarum's formatter.
+                $rawContent = $row['translated_content'] ?? null;
+                if ($rawContent !== null) {
+                    /** @var \Flarum\Formatter\Formatter $formatter */
+                    $formatter = resolve(\Flarum\Formatter\Formatter::class);
+                    try {
+                        $attributes['translated_content'] = $formatter->render($rawContent, $post);
+                    } catch (\Throwable $e) {
+                        $attributes['translated_content'] = $rawContent;
+                    }
+                } else {
+                    $attributes['translated_content'] = null;
+                }
             }
 
             return $attributes;

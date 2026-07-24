@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Twikura\Translate\Job;
 
-use Flarum\Formatter\Formatter;
 use Illuminate\Database\ConnectionInterface;
 use Twikura\Translate\Llm\OpenAiSseClient;
 use Twikura\Translate\Llm\PromptBuilder;
@@ -31,7 +30,6 @@ final class Worker
     public function __construct(
         private PromptBuilder $promptBuilder,
         private OpenAiSseClient $sseClient,
-        private Formatter $formatter,
         private ConnectionInterface $db,
         private string $llmBaseUrl,
         private string $llmApiKey,
@@ -133,9 +131,6 @@ final class Worker
         $tokensIn = $result['tokens_in'];
         $tokensOut = $result['tokens_out'];
 
-        // Format the translated Markdown/BBCode to HTML.
-        $translatedHtml = $this->formatter->render($translatedContent, null);
-
         // 3b. Success — write status=done + log row in a transaction.
         $this->db->beginTransaction();
         try {
@@ -144,7 +139,7 @@ final class Worker
                 ->where('target_lang', $targetLang)
                 ->update([
                     'status' => 'done',
-                    'translated_content' => $translatedHtml,
+                    'translated_content' => $translatedContent,
                     'error' => null,
                     'updated_at' => new \DateTimeImmutable(),
                 ]);
