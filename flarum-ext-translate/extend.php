@@ -121,18 +121,11 @@ return [
                 $attributes['translation_error']       = $row['error'] ?? null;
                 $attributes['translation_target_lang'] = $row['target_lang'];
 
-                // Format raw Markdown/BBCode to HTML via Flarum's formatter.
+                // Pass raw content through — newlines → <br> for HTML display.
+                // The frontend renders via m.trust() (same as original contentHtml).
                 $rawContent = $row['translated_content'] ?? null;
                 if ($rawContent !== null) {
-                    /** @var \Flarum\Formatter\Formatter $formatter */
-                    $formatter = resolve(\Flarum\Formatter\Formatter::class);
-                    try {
-                        $xml  = $formatter->parse($rawContent, $post);
-                        $html = $formatter->render($xml, $post, $request);
-                        $attributes['translated_content'] = $html;
-                    } catch (\Throwable $e) {
-                        $attributes['translated_content'] = $rawContent;
-                    }
+                    $attributes['translated_content'] = nl2br($rawContent, false);
                 } else {
                     $attributes['translated_content'] = null;
                 }
