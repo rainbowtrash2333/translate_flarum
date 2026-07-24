@@ -123,6 +123,12 @@ final class TranslateRunCommand extends AbstractCommand
 
             if ($result['status'] === 'error') {
                 echo ' ' . mb_substr((string) $result['error'], 0, 120);
+
+                // Rate-limited: back off before the next poll cycle.
+                if (str_contains((string) $result['error'], '429')) {
+                    echo ' (backing off 30s)';
+                    sleep(30);
+                }
             } else {
                 echo ' (' . mb_strlen($result['content']) . ' chars)';
             }
