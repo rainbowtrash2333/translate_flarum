@@ -40,6 +40,11 @@ function currentLang(): string {
 	);
 }
 
+function bareLang(locale: string): string {
+	const dash = locale.indexOf("-");
+	return dash > 0 ? locale.slice(0, dash) : locale;
+}
+
 function isTranslatablePost(post: Model): boolean {
 	return (
 		post.contentType() === "comment" && typeof post.contentHtml() === "string"
@@ -130,7 +135,7 @@ function retryTranslation(post: Model): void {
 			url: apiUrl("/translate/retry"),
 			body: {
 				post_id: post.id(),
-				target_lang: currentLang(),
+				target_lang: bareLang(currentLang()),
 			},
 		})
 		.then(() => app.store.find("posts", post.id()))
@@ -162,7 +167,7 @@ class TranslatedPostBody extends Component<{ post: Model }> {
 		const translatedContent = getTranslatedContent(post);
 		const targetLang = getTranslationTargetLang(post);
 		const current = currentLang();
-		const isCurrentLang = targetLang === current;
+		const isCurrentLang = bareLang(targetLang ?? "") === bareLang(current);
 
 		if (
 			state.showTranslation &&
@@ -240,7 +245,7 @@ function addPostButton(): void {
 		const status = getPostStatus(post);
 		const targetLang = getTranslationTargetLang(post);
 		const current = currentLang();
-		const isCurrentLang = targetLang === current;
+		const isCurrentLang = bareLang(targetLang ?? "") === bareLang(current);
 		const done = status === "done" && isCurrentLang;
 
 		let label: string;
