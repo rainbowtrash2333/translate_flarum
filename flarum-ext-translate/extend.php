@@ -78,7 +78,18 @@ return [
             }
 
             if ($targetLang === null || $targetLang === '') {
-                $targetLang = trim((string) $settings->get('default_locale', ''));
+                // Use the current translator locale (respects user language preference).
+                // Fall back to site default_locale if translator locale is unavailable.
+                try {
+                    /** @var \Symfony\Contracts\Translation\TranslatorInterface|null $translator */
+                    $translator = resolve(\Symfony\Contracts\Translation\TranslatorInterface::class);
+                    $targetLang = trim((string) $translator->getLocale());
+                } catch (\Throwable $e) {
+                    // Translator not available — fall through to default_locale
+                }
+                if ($targetLang === '' || $targetLang === null) {
+                    $targetLang = trim((string) $settings->get('default_locale', ''));
+                }
             }
 
             // No target language available — attach null fields.
