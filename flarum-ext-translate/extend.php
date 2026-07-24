@@ -93,6 +93,13 @@ return [
 
             $row = $repo->findForPost((int) $post->id, $targetLang);
 
+            // If no match found and targetLang contains a region code (e.g. "zh-Hans"),
+            // retry with the bare language code (e.g. "zh") to handle locale mismatches.
+            if ($row === null && str_contains($targetLang, '-')) {
+                $bareLang = explode('-', $targetLang, 2)[0];
+                $row = $repo->findForPost((int) $post->id, $bareLang);
+            }
+
             if ($row === null) {
                 $attributes['translation_status']      = null;
                 $attributes['translated_content']      = null;
