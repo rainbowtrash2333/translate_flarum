@@ -126,9 +126,17 @@ return [
                 $rawContent = $row['translated_content'] ?? null;
                 if ($rawContent !== null && $rawContent !== '') {
                     try {
+                        // Convert s9e XML tags (copied by LLM from source) back
+                        // to BBCode so parse() handles them correctly.
+                        $clean = preg_replace(
+                            ['#<URL url="([^"]*)">#', '#</URL>#', '#<EMAIL email="([^"]*)">#', '#</EMAIL>#'],
+                            ['[URL=$1]', '[/URL]', '[EMAIL=$1]', '[/EMAIL]'],
+                            $rawContent
+                        );
+
                         /** @var \Flarum\Formatter\Formatter $formatter */
                         $formatter = resolve(\Flarum\Formatter\Formatter::class);
-                        $xml = $formatter->parse($rawContent, $post);
+                        $xml = $formatter->parse($clean, $post);
                         $attributes['translated_content'] = $formatter->render($xml, $post, $request);
                     } catch (\Throwable $e) {
                         // Fallback: preserve line breaks at minimum
