@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Twikura\Translate\Command;
 
 use Flarum\Console\AbstractCommand;
+use Flarum\Formatter\Formatter;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
 use Twikura\Translate\Job\Worker;
@@ -42,6 +43,7 @@ final class TranslateRunCommand extends AbstractCommand
 
         $promptBuilder = resolve(PromptBuilder::class);
         $sseClient = resolve(OpenAiSseClient::class);
+        $formatter = resolve(Formatter::class);
 
         $llmBaseUrl = (string) $settings->get('twikura-translate.llm_base_url', 'http://opencode-go:3000');
         $llmApiKey = (string) $settings->get('twikura-translate.llm_api_key', '');
@@ -52,6 +54,7 @@ final class TranslateRunCommand extends AbstractCommand
         $worker = new Worker(
             promptBuilder: $promptBuilder,
             sseClient: $sseClient,
+            formatter: $formatter,
             db: $db,
             llmBaseUrl: $llmBaseUrl,
             llmApiKey: $llmApiKey,

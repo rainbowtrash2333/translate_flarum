@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Twikura\Translate\Job;
 
+use Flarum\Formatter\Formatter;
 use Illuminate\Database\ConnectionInterface;
 use Twikura\Translate\Llm\OpenAiSseClient;
 use Twikura\Translate\Llm\PromptBuilder;
@@ -30,6 +31,7 @@ final class Worker
     public function __construct(
         private PromptBuilder $promptBuilder,
         private OpenAiSseClient $sseClient,
+        private Formatter $formatter,
         private ConnectionInterface $db,
         private string $llmBaseUrl,
         private string $llmApiKey,
@@ -51,6 +53,10 @@ final class Worker
         $postId = (int) $row['post_id'];
         $targetLang = (string) $row['target_lang'];
         $sourceContent = (string) $row['source_content'];
+
+        // Convert s9e XML (stored in posts.content) back to plain BBCode/text
+        // so the LLM receives clean formatting tags, not XML internals.
+        $sourceContent = $this->formatter->unparse($sourceContent) ?? $sourceContent;
 
         // 1. Build translation messages.
         $messages = $this->promptBuilder->buildMessages($sourceContent, $targetLang);
