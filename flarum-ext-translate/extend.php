@@ -59,16 +59,20 @@ return [
     // ------------------------------------------------------------------
     (new Extend\ApiSerializer(PostSerializer::class))
         ->attributes(function (PostSerializer $serializer, $post, array $attributes): array {
-            /** @var SettingsRepositoryInterface $settings */
-            $settings = resolve(SettingsRepositoryInterface::class);
+            error_log('[translate] callback firing for post id=' . ($post->id ?? '?'));
+            try {
+                /** @var SettingsRepositoryInterface $settings */
+                $settings = resolve(SettingsRepositoryInterface::class);
 
-            /** @var PostTranslationRepository $repo */
-            $repo = resolve(PostTranslationRepository::class);
+                /** @var PostTranslationRepository $repo */
+                $repo = resolve(PostTranslationRepository::class);
 
-            /** @var ServerRequestInterface|null $request */
-            $request = resolve(ServerRequestInterface::class);
+                /** @var ServerRequestInterface|null $request */
+                $request = resolve(ServerRequestInterface::class);
 
-            // Determine the target language for this request:
+                error_log('[translate] resolved dependencies, targetLang determination next');
+
+                // Determine the target language for this request:
             //   1. Query param ?lang= (explicit front-end override)
             //   2. Fall back to site default_locale
             $targetLang = null;
@@ -107,6 +111,14 @@ return [
             }
 
             return $attributes;
+            } catch (\Throwable $e) {
+                error_log('[translate] EXCEPTION: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                $attributes['translation_status']      = null;
+                $attributes['translated_content']      = null;
+                $attributes['translation_error']       = null;
+                $attributes['translation_target_lang'] = null;
+                return $attributes;
+            }
         }),
 
     // ------------------------------------------------------------------
