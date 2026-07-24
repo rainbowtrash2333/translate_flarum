@@ -1,9 +1,7 @@
 <?php
 
-error_log('[translate] extend.php LOADED');
-
 use Flarum\Extend;
-use Flarum\Post\PostSerializer;
+use Flarum\Api\Serializer\PostSerializer;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Twikura\Translate\Api\Controller\TranslateBackfillController;
@@ -61,65 +59,31 @@ return [
     // ------------------------------------------------------------------
     (new Extend\ApiSerializer(PostSerializer::class))
         ->attributes(function (PostSerializer $serializer, $post, array $attributes): array {
-            error_log('[translate] PostSerializer callback ENTERED for post id=' . ($post->id ?? '?'));
-            try {
-                /** @var SettingsRepositoryInterface $settings */
-                $settings = resolve(SettingsRepositoryInterface::class);
+            /** @var SettingsRepositoryInterface $settings */
+            $settings = resolve(SettingsRepositoryInterface::class);
 
-                /** @var PostTranslationRepository $repo */
-                $repo = resolve(PostTranslationRepository::class);
+            /** @var PostTranslationRepository $repo */
+            $repo = resolve(PostTranslationRepository::class);
 
-                /** @var ServerRequestInterface|null $request */
-                $request = resolve(ServerRequestInterface::class);
+            /** @var ServerRequestInterface|null $request */
+            $request = resolve(ServerRequestInterface::class);
 
-                // Determine the target language for this request:
-                //   1. Query param ?lang= (explicit front-end override)
-                //   2. Fall back to site default_locale
-                $targetLang = null;
+            // Determine the target language for this request:
+            //   1. Query param ?lang= (explicit front-end override)
+            //   2. Fall back to site default_locale
+            $targetLang = null;
 
-                if ($request !== null) {
-                    $params      = $request->getQueryParams();
-                    $targetLang  = isset($params['lang']) ? trim((string) $params['lang']) : null;
-                }
+            if ($request !== null) {
+                $params      = $request->getQueryParams();
+                $targetLang  = isset($params['lang']) ? trim((string) $params['lang']) : null;
+            }
 
-                if ($targetLang === null || $targetLang === '') {
-                    $targetLang = trim((string) $settings->get('default_locale', ''));
-                }
+            if ($targetLang === null || $targetLang === '') {
+                $targetLang = trim((string) $settings->get('default_locale', ''));
+            }
 
-                // No target language available — attach null fields.
-                if ($targetLang === '' || $targetLang === null) {
-                    $attributes['translation_status']      = null;
-                    $attributes['translated_content']      = null;
-                    $attributes['translation_error']       = null;
-                    $attributes['translation_target_lang'] = null;
-
-                    error_log('[translate debug] No targetLang for post#' . ($post->id ?? '?') . ' — fields set to null');
-
-                    return $attributes;
-                }
-
-                error_log('[translate debug] Looking up post#' . ((int) $post->id) . ' targetLang=' . $targetLang);
-
-                $row = $repo->findForPost((int) $post->id, $targetLang);
-
-                if ($row === null) {
-                    error_log('[translate debug] No row found for post#' . ((int) $post->id) . ' lang=' . $targetLang);
-                    $attributes['translation_status']      = null;
-                    $attributes['translated_content']      = null;
-                    $attributes['translation_error']       = null;
-                    $attributes['translation_target_lang'] = null;
-                } else {
-                    error_log('[translate debug] Row found: status=' . $row['status'] . ' for post#' . ((int) $post->id));
-                    $attributes['translation_status']      = $row['status'];
-                    $attributes['translated_content']      = $row['translated_content'] ?? null;
-                    $attributes['translation_error']       = $row['error'] ?? null;
-                    $attributes['translation_target_lang'] = $row['target_lang'];
-                }
-
-                return $attributes;
-            } catch (\Throwable $e) {
-                error_log('[translate debug] EXCEPTION in PostSerializer callback: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-                // Re-attach null fields even on error
+            // No target language available — attach null fields.
+            if ($targetLang === '' || $targetLang === null) {
                 $attributes['translation_status']      = null;
                 $attributes['translated_content']      = null;
                 $attributes['translation_error']       = null;
@@ -127,6 +91,22 @@ return [
 
                 return $attributes;
             }
+
+            $row = $repo->findForPost((int) $post->id, $targetLang);
+
+            if ($row === null) {
+                $attributes['translation_status']      = null;
+                $attributes['translated_content']      = null;
+                $attributes['translation_error']       = null;
+                $attributes['translation_target_lang'] = null;
+            } else {
+                $attributes['translation_status']      = $row['status'];
+                $attributes['translated_content']      = $row['translated_content'] ?? null;
+                $attributes['translation_error']       = $row['error'] ?? null;
+                $attributes['translation_target_lang'] = $row['target_lang'];
+            }
+
+            return $attributes;
         }),
 
     // ------------------------------------------------------------------
