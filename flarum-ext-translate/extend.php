@@ -3,7 +3,6 @@
 use Flarum\Extend;
 use Flarum\Api\Serializer\PostSerializer;
 use Flarum\Settings\SettingsRepositoryInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Twikura\Translate\Api\Controller\TranslateBackfillController;
 use Twikura\Translate\Api\Controller\TranslateBackfillStatusController;
 use Twikura\Translate\Api\Controller\TranslateLogController;
@@ -59,20 +58,16 @@ return [
     // ------------------------------------------------------------------
     (new Extend\ApiSerializer(PostSerializer::class))
         ->attributes(function (PostSerializer $serializer, $post, array $attributes): array {
-            error_log('[translate] callback firing for post id=' . ($post->id ?? '?'));
-            try {
-                /** @var SettingsRepositoryInterface $settings */
-                $settings = resolve(SettingsRepositoryInterface::class);
+            /** @var SettingsRepositoryInterface $settings */
+            $settings = resolve(SettingsRepositoryInterface::class);
 
-                /** @var PostTranslationRepository $repo */
-                $repo = resolve(PostTranslationRepository::class);
+            /** @var PostTranslationRepository $repo */
+            $repo = resolve(PostTranslationRepository::class);
 
-                /** @var ServerRequestInterface|null $request */
-                $request = resolve(ServerRequestInterface::class);
+            /** @var \Psr\Http\Message\ServerRequestInterface|null $request */
+            $request = $serializer->getRequest();
 
-                error_log('[translate] resolved dependencies, targetLang determination next');
-
-                // Determine the target language for this request:
+            // Determine the target language for this request:
             //   1. Query param ?lang= (explicit front-end override)
             //   2. Fall back to site default_locale
             $targetLang = null;
@@ -111,14 +106,6 @@ return [
             }
 
             return $attributes;
-            } catch (\Throwable $e) {
-                error_log('[translate] EXCEPTION: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
-                $attributes['translation_status']      = null;
-                $attributes['translated_content']      = null;
-                $attributes['translation_error']       = null;
-                $attributes['translation_target_lang'] = null;
-                return $attributes;
-            }
         }),
 
     // ------------------------------------------------------------------
