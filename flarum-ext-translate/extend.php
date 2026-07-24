@@ -127,9 +127,7 @@ return [
 
                 return $attributes;
             }
-        });
-
-error_log('[translate] PostSerializer extender REGISTERED');
+        }),
 
     // ------------------------------------------------------------------
     // Settings — defaults + serialized forum payload
