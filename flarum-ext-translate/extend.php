@@ -127,7 +127,9 @@ return [
                     /** @var \Flarum\Formatter\Formatter $formatter */
                     $formatter = resolve(\Flarum\Formatter\Formatter::class);
                     try {
-                        $attributes['translated_content'] = $formatter->render($rawContent, $post);
+                        $xml  = $formatter->parse($rawContent, $post);
+                        $html = $formatter->render($xml, $post, $request);
+                        $attributes['translated_content'] = $html;
                     } catch (\Throwable $e) {
                         $attributes['translated_content'] = $rawContent;
                     }
