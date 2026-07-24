@@ -61,6 +61,7 @@ return [
     // ------------------------------------------------------------------
     (new Extend\ApiSerializer(PostSerializer::class))
         ->attributes(function (PostSerializer $serializer, $post, array $attributes): array {
+            error_log('[translate] PostSerializer callback ENTERED for post id=' . ($post->id ?? '?'));
             try {
                 /** @var SettingsRepositoryInterface $settings */
                 $settings = resolve(SettingsRepositoryInterface::class);
