@@ -1,5 +1,7 @@
 <?php
 
+error_log('[translate] extend.php LOADED');
+
 use Flarum\Extend;
 use Flarum\Post\PostSerializer;
 use Flarum\Settings\SettingsRepositoryInterface;
