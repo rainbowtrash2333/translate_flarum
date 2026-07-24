@@ -121,11 +121,19 @@ return [
                 $attributes['translation_error']       = $row['error'] ?? null;
                 $attributes['translation_target_lang'] = $row['target_lang'];
 
-                // Pass raw content through — newlines → <br> for HTML display.
-                // The frontend renders via m.trust() (same as original contentHtml).
+                // Render raw BBCode/Markdown to HTML — same pipeline as
+                // CommentPost::formatContent(): parse() → render().
                 $rawContent = $row['translated_content'] ?? null;
-                if ($rawContent !== null) {
-                    $attributes['translated_content'] = nl2br($rawContent, false);
+                if ($rawContent !== null && $rawContent !== '') {
+                    try {
+                        /** @var \Flarum\Formatter\Formatter $formatter */
+                        $formatter = resolve(\Flarum\Formatter\Formatter::class);
+                        $xml = $formatter->parse($rawContent, $post);
+                        $attributes['translated_content'] = $formatter->render($xml, $post, $request);
+                    } catch (\Throwable $e) {
+                        // Fallback: preserve line breaks at minimum
+                        $attributes['translated_content'] = nl2br($rawContent, false);
+                    }
                 } else {
                     $attributes['translated_content'] = null;
                 }
