@@ -62,13 +62,13 @@ class TranslateBackfillController implements RequestHandlerInterface
         $prefix = $this->db->getTablePrefix();
 
         // --- Count ALL stale comment posts (not capped) -----------------------
-        $countRow = $this->db->selectOne(
+             $countRow = $this->db->selectOne(
             "SELECT COUNT(*) AS cnt
              FROM {$prefix}posts p
              LEFT JOIN {$prefix}post_translations t
                  ON t.post_id = p.id AND t.target_lang = ?
              WHERE p.type = 'comment'
-                 AND (t.post_id IS NULL OR t.source_content != p.content)",
+                 AND (t.post_id IS NULL OR t.source_content != p.content OR t.status = 'error')",
             [$lang],
         );
 
@@ -78,7 +78,7 @@ class TranslateBackfillController implements RequestHandlerInterface
         // New posts get a fresh pending row (is_backfill=1).
         // Existing stale rows are reset to pending (status, source_content, error cleared).
         // is_backfill is NOT overwritten on duplicate — preserves event-triggered priority.
-        $inserted = $this->db->affectingStatement(
+             $inserted = $this->db->affectingStatement(
             "INSERT INTO {$prefix}post_translations
                  (post_id, target_lang, source_content, status, is_backfill, created_at, updated_at)
              SELECT p.id, ?, p.content, 'pending', 1, NOW(), NOW()
@@ -86,7 +86,7 @@ class TranslateBackfillController implements RequestHandlerInterface
              LEFT JOIN {$prefix}post_translations t
                  ON t.post_id = p.id AND t.target_lang = ?
              WHERE p.type = 'comment'
-                 AND (t.post_id IS NULL OR t.source_content != p.content)
+                 AND (t.post_id IS NULL OR t.source_content != p.content OR t.status = 'error')
              ORDER BY p.id ASC
              LIMIT ?
              ON DUPLICATE KEY UPDATE

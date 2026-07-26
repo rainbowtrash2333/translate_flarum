@@ -94,7 +94,7 @@ class PostTranslationRepository
              LEFT JOIN {$this->prefix}post_translations t
                  ON t.post_id = p.id AND t.target_lang = ?
              WHERE p.type = 'comment'
-                 AND (t.post_id IS NULL OR t.source_content != p.content)
+                 AND (t.post_id IS NULL OR t.source_content != p.content OR t.status = 'error')
              ORDER BY p.id ASC
              LIMIT ?",
             [$targetLang, $limit]
