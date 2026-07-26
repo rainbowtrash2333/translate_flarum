@@ -52,7 +52,7 @@ function isTranslatablePost(post: Model): boolean {
 }
 
 function getPostState(post: Model): PostState {
-	const id = post.id();
+	const id = String(post.id());
 	let state = states.get(id);
 	if (!state) {
 		state = { showTranslation: autoEnabled(), autoAttempted: false };
@@ -165,14 +165,10 @@ class TranslatedPostBody extends Component<{ post: Model }> {
 		const state = getPostState(post);
 		const status = getPostStatus(post);
 		const translatedContent = getTranslatedContent(post);
-		const targetLang = getTranslationTargetLang(post);
-		const current = currentLang();
-		const isCurrentLang = bareLang(targetLang ?? "") === bareLang(current);
 
 		if (
 			state.showTranslation &&
 			status === "done" &&
-			isCurrentLang &&
 			translatedContent
 		) {
 			return m.trust(translatedContent);
@@ -243,10 +239,7 @@ function addPostButton(): void {
 
 		const state = getPostState(post);
 		const status = getPostStatus(post);
-		const targetLang = getTranslationTargetLang(post);
-		const current = currentLang();
-		const isCurrentLang = bareLang(targetLang ?? "") === bareLang(current);
-		const done = status === "done" && isCurrentLang;
+		const done = status === "done";
 
 		let label: string;
 		let loading = false;
