@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Twikura\Translate\Event;
 
 use Flarum\Post\CommentPost;
-use Flarum\Post\Event\Created;
+use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Revised;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Twikura\Translate\LangMapConfig;
@@ -31,7 +31,7 @@ class TranslationEventListeners
         $this->repo     = $repo;
     }
 
-    public function onPostCreated(Created $event): void
+    public function onPostPosted(Posted $event): void
     {
         $this->dispatchTranslationJob($event->post);
     }
@@ -66,11 +66,20 @@ class TranslationEventListeners
             return;
         }
 
+        // 3b. Normalize region-code locales (e.g. "zh-Hans" → "zh") so they
+        // match the bare-code lang_map keys, and so stored target_lang is
+        // consistent with what the frontend sends and the serializer resolves.
+        $bareTarget = strtolower(strtok(str_replace('_', '-', $targetLang), '-'));
+
+        if ($bareTarget === '') {
+            return;
+        }
+
         // 4. Validate that the target lang exists in lang_map.
         $langMapRaw = (string) $this->settings->get('twikura-translate.lang_map', '');
         $langMap    = LangMapConfig::parse($langMapRaw);
 
-        if (! array_key_exists($targetLang, $langMap)) {
+        if (! array_key_exists($bareTarget, $langMap)) {
             // default_locale is not in the configured lang_map — skip.
             return;
         }
@@ -78,7 +87,7 @@ class TranslationEventListeners
         // 5. Enqueue a pending translation row (non-backfill).
         $this->repo->enqueue(
             postId: (int) $post->id,
-            targetLang: $targetLang,
+            targetLang: $bareTarget,
             sourceContent: (string) $post->content,
             isBackfill: false,
         );

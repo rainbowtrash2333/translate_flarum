@@ -16,8 +16,10 @@ use Twikura\Translate\Repository\PostTranslationRepository;
 /**
  * POST /api/translate/retry
  *
- * Resets a failed (status=error) translation row back to pending so the
- * Worker will re-attempt it on the next poll cycle.
+ * Resets a failed (status=error) translation row back to pending, or
+ * creates a fresh pending row for a post that has never been translated
+ * (manual translate). Rows that are already pending/running/done are
+ * returned as-is.
  *
  * Permission: authenticated users, or guests when allow_guests is enabled.
  */
@@ -66,22 +68,28 @@ class TranslateRetryController implements RequestHandlerInterface
             ], 400);
         }
 
-        // --- Find the error row ------------------------------------------------
+        // --- Find the existing row ------------------------------------------------
         $row = $this->repo->findForPost($postId, $targetLang);
 
-        if ($row === null || $row['status'] !== 'error') {
-            return new JsonResponse([
-                'errors' => [[
-                    'status' => '404',
-                    'detail' => 'No error translation found for this post.',
-                ]],
-            ], 404);
+        // Already pending / running / done — nothing to do.
+        if ($row !== null && in_array($row['status'], ['pending', 'running', 'done'], true)) {
+            return new JsonResponse(['status' => $row['status']]);
         }
 
         // --- Fetch current post content (not the stale cached snapshot) --------
         // If the post was edited after the failed translation, the cached
         // source_content would be stale.  We read the live posts.content.
         $post = $this->db->table('posts')->where('id', $postId)->first(['content']);
+
+        if ($post === null && $row === null) {
+            return new JsonResponse([
+                'errors' => [[
+                    'status' => '404',
+                    'detail' => 'Post not found.',
+                ]],
+            ], 404);
+        }
+
         $currentContent = $post !== null ? (string) $post->content : (string) $row['source_content'];
 
         // --- Reset to pending via enqueue (ON DUPLICATE KEY UPDATE) ------------

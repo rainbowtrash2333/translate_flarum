@@ -30,7 +30,9 @@ class PostTranslationRepository
              ON DUPLICATE KEY UPDATE
                  status = 'pending',
                  source_content = VALUES(source_content),
-                 error = NULL",
+                 error = NULL,
+                 translated_content = NULL,
+                 translated_content_html = NULL",
             [$postId, $targetLang, $sourceContent, (int) $isBackfill]
         );
     }
@@ -48,6 +50,46 @@ class PostTranslationRepository
         );
 
         return $row !== null ? (array) $row : null;
+    }
+
+    /**
+     * Find the translation row for a post, tolerating locale-code shape
+     * mismatches between the request locale and the stored target_lang.
+     *
+     * Lookup order:
+     *   1. Exact match (post_id + target_lang)
+     *   2. Region-code requested → bare code (e.g. "zh-Hans" → "zh")
+     *   3. Bare code requested → exact, else any stored region variant
+     *      (e.g. "zh" → "zh-Hans", for rows written by older builds)
+     */
+    public function findForPostFlexible(int $postId, string $targetLang): ?array
+    {
+        $row = $this->findForPost($postId, $targetLang);
+
+        if ($row !== null) {
+            return $row;
+        }
+
+        if (str_contains($targetLang, '-') || str_contains($targetLang, '_')) {
+            $bare = strtolower(strtok(str_replace('_', '-', $targetLang), '-'));
+
+            if ($bare === '') {
+                return null;
+            }
+
+            return $this->findForPost($postId, $bare);
+        }
+
+        // Bare code requested — accept any stored region variant.
+        $found = $this->db->selectOne(
+            "SELECT * FROM {$this->prefix}post_translations"
+            . " WHERE post_id = ? AND (target_lang = ? OR target_lang LIKE ?)"
+            . " ORDER BY (target_lang = ?) DESC, created_at DESC"
+            . " LIMIT 1",
+            [$postId, $targetLang, $targetLang . '-%', $targetLang]
+        );
+
+        return $found !== null ? (array) $found : null;
     }
 
     /**

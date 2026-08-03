@@ -137,6 +137,20 @@ final class Worker
         $tokensIn = $result['tokens_in'];
         $tokensOut = $result['tokens_out'];
 
+        // Render translated BBCode to HTML once at write time, so the
+        // serializer can serve the cached HTML instead of re-running the
+        // expensive parse()+render() pipeline on every read.  Legacy rows
+        // fall back to on-the-fly rendering in the serializer.
+        $translatedContentHtml = null;
+
+        try {
+            $postModel = \Flarum\Post\CommentPost::query()->find($postId);
+            $xml       = $this->formatter->parse($translatedContent, $postModel);
+            $translatedContentHtml = $this->formatter->render($xml, $postModel, null);
+        } catch (\Throwable $e) {
+            $translatedContentHtml = null;
+        }
+
         // 3b. Success — write status=done + log row in a transaction.
         $this->db->beginTransaction();
         try {
@@ -146,6 +160,7 @@ final class Worker
                 ->update([
                     'status' => 'done',
                     'translated_content' => $translatedContent,
+                    'translated_content_html' => $translatedContentHtml,
                     'error' => null,
                     'updated_at' => new \DateTimeImmutable(),
                 ]);

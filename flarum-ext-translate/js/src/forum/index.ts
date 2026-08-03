@@ -122,12 +122,30 @@ function stopPolling(): void {
 	}
 }
 
+function pruneStates(): void {
+	const discussion = getCurrentDiscussion();
+	if (!discussion) return;
+	const posts = discussion.posts();
+	if (!Array.isArray(posts)) return;
+	const visible = new Set<string>();
+	posts.forEach((post) => {
+		visible.add(String(post.id()));
+	});
+	states.forEach((_, id) => {
+		if (!visible.has(id)) states.delete(id);
+	});
+}
+
 function updatePolling(): void {
+	pruneStates();
 	if (hasPendingPost()) ensurePolling();
 }
 
-function retryTranslation(post: Model): void {
+function requestTranslation(post: Model): void {
 	if (!canRetry()) return;
+
+	const state = getPostState(post);
+	state.showTranslation = true; // 手动请求时，结果一到就展示译文
 
 	app
 		.request({
@@ -198,7 +216,7 @@ class TranslatedPostBody extends Component<{ post: Model }> {
 								{
 									className: "Button Button--link TwikuraTranslateRetryButton",
 									icon: "fas fa-redo",
-									onclick: () => retryTranslation(post),
+									onclick: () => requestTranslation(post),
 								},
 								app.translator.trans("twikura-translate.forum.retry"),
 							)
@@ -256,7 +274,7 @@ function addPostButton(): void {
 			};
 		} else if (status === "error") {
 			label = app.translator.trans("twikura-translate.forum.retry");
-			onClick = () => retryTranslation(post);
+			onClick = () => requestTranslation(post);
 			if (!canRetry()) disabled = true;
 		} else if (status === "pending" || status === "running") {
 			label = app.translator.trans("twikura-translate.forum.translating");
@@ -265,8 +283,8 @@ function addPostButton(): void {
 			onClick = () => {};
 		} else {
 			label = app.translator.trans("twikura-translate.forum.translate");
-			disabled = true;
-			onClick = () => {};
+			onClick = () => requestTranslation(post);
+			if (!canRetry()) disabled = true;
 		}
 
 		items.add(

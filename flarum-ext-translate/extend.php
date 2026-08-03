@@ -45,8 +45,8 @@ return [
     // ------------------------------------------------------------------
     (new Extend\Event())
         ->listen(
-            \Flarum\Post\Event\Created::class,
-            [TranslationEventListeners::class, 'onPostCreated'],
+            \Flarum\Post\Event\Posted::class,
+            [TranslationEventListeners::class, 'onPostPosted'],
         )
         ->listen(
             \Flarum\Post\Event\Revised::class,
@@ -102,14 +102,9 @@ return [
                 return $attributes;
             }
 
-            $row = $repo->findForPost((int) $post->id, $targetLang);
-
-            // If no match found and targetLang contains a region code (e.g. "zh-Hans"),
-            // retry with the bare language code (e.g. "zh") to handle locale mismatches.
-            if ($row === null && str_contains($targetLang, '-')) {
-                $bareLang = explode('-', $targetLang, 2)[0];
-                $row = $repo->findForPost((int) $post->id, $bareLang);
-            }
+            // Locale-tolerant lookup: exact match first, then region↔bare
+            // variants (e.g. "zh-Hans" → "zh" and vice versa).
+            $row = $repo->findForPostFlexible((int) $post->id, $targetLang);
 
             if ($row === null) {
                 $attributes['translation_status']      = null;
@@ -121,18 +116,24 @@ return [
                 $attributes['translation_error']       = $row['error'] ?? null;
                 $attributes['translation_target_lang'] = $row['target_lang'];
 
-                // Render raw BBCode/Markdown to HTML — same pipeline as
-                // CommentPost::formatContent(): parse() → render().
+                // Prefer the HTML rendered once at write time by the Worker;
+                // fall back to rendering on the fly for legacy rows.
                 $rawContent = $row['translated_content'] ?? null;
+                $cachedHtml = $row['translated_content_html'] ?? null;
+
                 if ($rawContent !== null && $rawContent !== '') {
-                    try {
-                        /** @var \Flarum\Formatter\Formatter $formatter */
-                        $formatter = resolve(\Flarum\Formatter\Formatter::class);
-                        $xml = $formatter->parse($rawContent, $post);
-                        $attributes['translated_content'] = $formatter->render($xml, $post, $request);
-                    } catch (\Throwable $e) {
-                        // Fallback: preserve line breaks at minimum
-                        $attributes['translated_content'] = nl2br($rawContent, false);
+                    if ($cachedHtml !== null && $cachedHtml !== '') {
+                        $attributes['translated_content'] = $cachedHtml;
+                    } else {
+                        try {
+                            /** @var \Flarum\Formatter\Formatter $formatter */
+                            $formatter = resolve(\Flarum\Formatter\Formatter::class);
+                            $xml = $formatter->parse($rawContent, $post);
+                            $attributes['translated_content'] = $formatter->render($xml, $post, $request);
+                        } catch (\Throwable $e) {
+                            // Fallback: preserve line breaks at minimum
+                            $attributes['translated_content'] = nl2br($rawContent, false);
+                        }
                     }
                 } else {
                     $attributes['translated_content'] = null;
