@@ -1,0 +1,79 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getTablePrefix\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Api/Controller/TranslateBackfillController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/Command/TranslateRunCommand.php
+
+		-
+			message: '#^While loop condition is always true\.$#'
+			identifier: while.alwaysTrue
+			count: 1
+			path: src/Command/TranslateRunCommand.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between lowercase\-string&non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Event/TranslationEventListeners.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Job/Worker.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Property Twikura\\Translate\\Llm\\OpenAiSseClient\:\:\$tokensIn is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Property Twikura\\Translate\\Llm\\OpenAiSseClient\:\:\$tokensOut is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Result of && is always true\.$#'
+			identifier: booleanAnd.alwaysTrue
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between '''' and '''' will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/Llm/OpenAiSseClient.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getTablePrefix\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Repository/PostTranslationRepository.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between lowercase\-string&non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Repository/PostTranslationRepository.php
